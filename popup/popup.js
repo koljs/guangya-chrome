@@ -645,7 +645,7 @@ async function ossUploadPart(bucketUrl, objectKey, creds, uploadId, partNumber, 
     const text = await resp.text();
     throw new Error(`分片 ${partNumber} 上传失败: ${resp.status} ${text}`);
   }
-  const etag = resp.headers.get('ETag');
+  const etag = (resp.headers.get('ETag') || '').replace(/"/g, '');
   if (!etag) throw new Error(`分片 ${partNumber} 未获取到ETag`);
   return { partNumber, etag, size: blob.size };
 }
