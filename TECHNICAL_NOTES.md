@@ -295,9 +295,15 @@ data[0].data.btResInfo
 
 上传策略：突破100M限制 + 接近官方APP速度。
 - 文件 ≤ 4MB：简单上传（单次PUT）
-- 文件 > 4MB：分片上传（Multipart Upload），4MB分片 + 3并发并行
+- 文件 > 4MB：分片上传（Multipart Upload），64MB分片 + 4并发并行
 
-与Python版`oss2.resumable_upload()`策略一致（part_size=4MB，多线程并行），与官方APP速度接近。
+三端参数对比：
+
+| 端 | 分片大小 | 并行度 | 备注 |
+|---|---|---|---|
+| Chrome插件 | 64MB | 4 | `file.slice()`不读全文件到内存 |
+| Android | 64MB | 4 | `PartRequestBody`流式读取ContentResolver |
+| Python | 4MB | 3线程 | `oss2.resumable_upload(num_threads=3)` |
 
 > **关键决策**：上传在popup.js中直接fetch OSS API，不再通过service-worker转发arrayBuffer。原因：(1) 大文件arrayBuffer转发到SW会爆内存；(2) popup上下文支持流式上传；(3) 减少IPC开销。
 
@@ -718,6 +724,8 @@ chrome.downloads.onChanged.addListener((delta) => {
 | `x-oss-security-token` 未加入CanonicalizedOSSHeaders | 必须按字母序包含：`x-oss-date:...\nx-oss-security-token:...\n` |
 | 浏览器fetch禁止设置`Date`头 | 使用`x-oss-date`替代，StringToSign中Date字段填x-oss-date的值 |
 | STS凭证缺少sessionToken | 请求头和签名中都要包含`x-oss-security-token` |
+| **ETag包含双引号导致分片合并失败** | OkHttp/fetch返回的ETag形如 `"abc123"`，CompleteMultipartUpload XML中ETag不能有引号。Chrome用`.replace(/"/g, '')`，Android用`.trim('"')` |
+| **分片大小选择** | 64MB分片+4并行可接近官方APP速度；4MB分片太小导致请求数过多速度慢 |
 
 ### 10.2 Side Panel
 
