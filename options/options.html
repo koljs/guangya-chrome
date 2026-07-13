@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>简易光鸭云 - 设置</title>
+<link href="https://cdn.jsdelivr.net/npm/material-icons@1.13.12/iconfont/round.css" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #1A73E8;
+    --primary-light: #E8F0FE;
+    --primary-dark: #1557B0;
+    --surface: #FFFFFF;
+    --background: #F8F9FA;
+    --on-surface: #202124;
+    --on-surface-variant: #5F6368;
+    --outline: #DADCE0;
+    --error: #D93025;
+    --success: #1E8E3E;
+    --radius-m: 8px;
+    --radius-l: 16px;
+    --shadow-1: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+    --shadow-2: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+    --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+  }
+  [data-theme="dark"] {
+    --primary: #8AB4F8;
+    --primary-light: #1A2332;
+    --surface: #1E1E1E;
+    --background: #121212;
+    --on-surface: #E8EAED;
+    --on-surface-variant: #9AA0A6;
+    --outline: #3C4043;
+  }
+  body {
+    font-family: var(--font-body);
+    background: var(--background);
+    color: var(--on-surface);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--surface);
+    border-radius: var(--radius-l);
+    box-shadow: var(--shadow-2);
+    padding: 40px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .logo {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #FF6B00 0%, #FFD700 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+  }
+  .title {
+    font-size: 24px;
+    font-weight: 400;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: var(--on-surface-variant);
+    margin-top: 4px;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-label {
+    display: block;
+    font-size: 13px;
+    color: var(--on-surface-variant);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+    color: var(--on-surface);
+    font-size: 14px;
+    font-family: var(--font-body);
+    transition: border-color .2s;
+  }
+  .form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    border-width: 2px;
+    padding: 11px 15px;
+  }
+  .form-hint {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--radius-m);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: var(--font-body);
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    width: 100%;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { background: var(--primary-dark); box-shadow: var(--shadow-1); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--primary);
+    width: 100%;
+    margin-top: 8px;
+  }
+  .btn-secondary:hover { background: var(--primary-light); }
+  .status {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: var(--radius-m);
+    font-size: 13px;
+    display: none;
+  }
+  .status.success { background: #E6F4EA; color: var(--success); display: block; }
+  .status.error { background: #FCE8E6; color: var(--error); display: block; }
+  .status.loading { background: var(--primary-light); color: var(--primary); display: block; }
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 24px;
+  }
+  .actions .btn { margin-top: 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">
+      <span class="material-icons-round">cloud</span>
+    </div>
+    <div>
+      <div class="title">简易光鸭云</div>
+      <div class="subtitle">Chrome浏览器插件设置</div>
+    </div>
+  </div>
+
+  <div id="loginSection">
+    <div class="form-group">
+      <label class="form-label">Refresh Token</label>
+      <input type="text" id="refreshToken" class="form-input" placeholder="请输入refresh_token">
+      <div class="form-hint">通过抓包官方APP登录请求获取，有效期较长</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Device ID</label>
+      <input type="text" id="deviceId" class="form-input" placeholder="请输入设备ID（32位数字）">
+      <div class="form-hint">抓包获取，或点击"随机生成"按钮</div>
+    </div>
+
+    <button id="genDeviceId" class="btn btn-secondary">
+      <span class="material-icons-round">refresh</span>
+      随机生成Device ID
+    </button>
+
+    <button id="loginBtn" class="btn btn-primary">
+      <span class="material-icons-round">login</span>
+      登录并验证
+    </button>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <div id="loggedInSection" style="display:none;">
+    <div class="form-group">
+      <label class="form-label">登录状态</label>
+      <div id="userInfo" class="form-hint" style="font-size:14px; color: var(--success);">已登录</div>
+    </div>
+    <div class="actions">
+      <button id="testBtn" class="btn btn-secondary">
+        <span class="material-icons-round">check_circle</span>
+        测试连接
+      </button>
+      <button id="logoutBtn" class="btn btn-secondary" style="color: var(--error);">
+        <span class="material-icons-round">logout</span>
+        退出登录
+      </button>
+    </div>
+    <div id="status2" class="status"></div>
+  </div>
+</div>
+
+<script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>简易光鸭云</title>
+<link href="https://cdn.jsdelivr.net/npm/material-icons@1.13.12/iconfont/round.css" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #1A73E8;
+    --primary-light: #E8F0FE;
+    --primary-dark: #1557B0;
+    --surface: #FFFFFF;
+    --background: #F8F9FA;
+    --on-surface: #202124;
+    --on-surface-variant: #5F6368;
+    --outline: #DADCE0;
+    --error: #D93025;
+    --success: #1E8E3E;
+    --warning: #F29900;
+    --shadow-1: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+    --shadow-2: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+    --radius-s: 4px;
+    --radius-m: 8px;
+    --radius-l: 16px;
+    --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+    --hover-overlay: rgba(60,64,67,.04);
+    --active-overlay: rgba(60,64,67,.08);
+    --icon-folder-bg: #E8F0FE;
+    --icon-image-bg: #FCE8E6;
+    --icon-video-bg: #F3E8FD;
+    --icon-audio-bg: #FEF7E0;
+    --icon-doc-bg: #E6F4EA;
+    --icon-other-bg: #F1F3F4;
+  }
+  [data-theme="dark"] {
+    --primary: #8AB4F8;
+    --primary-light: #1B2A3A;
+    --primary-dark: #A8C7FA;
+    --surface: #1E1F22;
+    --background: #141518;
+    --on-surface: #E3E3E3;
+    --on-surface-variant: #9AA0A6;
+    --outline: #3C4043;
+    --error: #F28B82;
+    --success: #81C995;
+    --warning: #FDD663;
+    --shadow-1: 0 1px 2px rgba(0,0,0,.5), 0 1px 3px 1px rgba(0,0,0,.3);
+    --shadow-2: 0 1px 3px rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
+    --hover-overlay: rgba(255,255,255,.05);
+    --active-overlay: rgba(255,255,255,.08);
+    --icon-folder-bg: #2A3A4A;
+    --icon-image-bg: #3A2A2A;
+    --icon-video-bg: #3A2A3A;
+    --icon-audio-bg: #3A352A;
+    --icon-doc-bg: #2A3A2E;
+    --icon-other-bg: #2A2A2C;
+  }
+  html, body { width: 400px; height: 600px; overflow: hidden; }
+  /* Side Panel 环境自适应：宽高填满整个侧边栏 */
+  html.side-panel-mode, body.side-panel-mode {
+    width: 100% !important;
+    height: 100vh !important;
+  }
+  body.side-panel-mode .app-bar {
+    border-radius: 0;
+    padding: 0 4px 0 8px;
+    gap: 2px;
+    flex-wrap: nowrap;
+  }
+  body.side-panel-mode .app-title { white-space: nowrap; font-size: 14px; }
+  body.side-panel-mode .logo { width: 28px; height: 28px; font-size: 16px; }
+  body.side-panel-mode .icon-btn { width: 30px; height: 30px; }
+  body.side-panel-mode .icon-btn .material-icons-round { font-size: 18px; }
+  body.side-panel-mode .action-bar { padding: 6px 8px; gap: 2px; }
+  body.side-panel-mode .action-bar .icon-btn { width: 30px; height: 30px; }
+  body.side-panel-mode .breadcrumb { padding: 6px 8px; font-size: 12px; }
+  body.side-panel-mode .file-item { padding: 8px 10px; gap: 10px; }
+  body.side-panel-mode .file-icon { width: 36px; height: 36px; font-size: 18px; }
+  body.side-panel-mode .capacity-bar { padding: 6px 10px; }
+  body {
+    font-family: var(--font-body);
+    background: var(--background);
+    color: var(--on-surface);
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* App Bar */
+  .app-bar {
+    height: 56px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--outline);
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 16px;
+    gap: 8px;
+    box-shadow: var(--shadow-1);
+    flex-shrink: 0;
+  }
+  .logo {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #FF6B00 0%, #FFD700 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .app-title {
+    font-size: 18px;
+    font-weight: 400;
+    flex: 1;
+  }
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--on-surface-variant);
+    transition: background .2s;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { background: var(--active-overlay); }
+  .icon-btn.active { color: var(--primary); }
+  .icon-btn .material-icons-round { font-size: 20px; }
+  /* Breadcrumb */
+  .breadcrumb {
+    padding: 8px 16px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--on-surface-variant);
+    border-bottom: 1px solid var(--outline);
+    overflow-x: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .breadcrumb-item {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-s);
+    transition: background .2s;
+  }
+  .breadcrumb-item:hover { background: var(--active-overlay); }
+  .breadcrumb-item.current { color: var(--on-surface); font-weight: 500; }
+  .breadcrumb-sep { color: var(--outline); }
+  /* Content */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+  /* List View */
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-m);
+    cursor: pointer;
+    transition: background .2s;
+    position: relative;
+  }
+  .file-item:hover { background: var(--hover-overlay); }
+  .file-item.selected { background: var(--primary-light); }
+  .file-item .more-btn { opacity: 0; transition: opacity .2s; }
+  .file-item:hover .more-btn { opacity: 1; }
+  .more-btn {
+    width: 32px; height: 32px;
+    border: none; background: transparent; cursor: pointer;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: var(--on-surface-variant); flex-shrink: 0;
+  }
+  .more-btn:hover { background: var(--active-overlay); }
+  .more-btn .material-icons-round { font-size: 18px; }
+  /* Grid View */
+  .file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+    gap: 8px;
+    padding: 4px;
+  }
+  .file-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 8px;
+    border-radius: var(--radius-m);
+    cursor: pointer;
+    transition: background .2s;
+    position: relative;
+    text-align: center;
+  }
+  .file-card:hover { background: var(--hover-overlay); }
+  .file-card.selected { background: var(--primary-light); }
+  .file-card .file-card-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 8px;
+    font-size: 24px;
+  }
+  .file-card .file-card-name {
+    font-size: 12px;
+    color: var(--on-surface);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    width: 100%;
+  }
+  .file-card .file-card-meta {
+    font-size: 11px;
+    color: var(--on-surface-variant);
+    margin-top: 2px;
+  }
+  .file-card .more-btn { position: absolute; top: 4px; right: 4px; opacity: 0; }
+  .file-card:hover .more-btn { opacity: 1; }
+  /* File Icons */
+  .file-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 20px;
+  }
+  .file-icon.folder, .file-card-icon.folder { background: var(--icon-folder-bg); color: var(--primary); }
+  .file-icon.image, .file-card-icon.image { background: var(--icon-image-bg); color: var(--error); }
+  .file-icon.video, .file-card-icon.video { background: var(--icon-video-bg); color: #9334E6; }
+  .file-icon.audio, .file-card-icon.audio { background: var(--icon-audio-bg); color: var(--warning); }
+  .file-icon.doc, .file-card-icon.doc { background: var(--icon-doc-bg); color: var(--success); }
+  .file-icon.other, .file-card-icon.other { background: var(--icon-other-bg); color: var(--on-surface-variant); }
+  .file-info { flex: 1; min-width: 0; }
+  .file-name {
+    font-size: 14px; color: var(--on-surface);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .file-meta { font-size: 12px; color: var(--on-surface-variant); margin-top: 2px; }
+  /* Loading / Empty */
+  .loading {
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px; color: var(--on-surface-variant); gap: 8px;
+  }
+  .loading .material-icons-round { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 20px; color: var(--on-surface-variant); text-align: center; gap: 12px;
+  }
+  .empty .material-icons-round { font-size: 48px; opacity: 0.5; }
+  /* Not logged in */
+  .not-logged {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: 1; padding: 40px; text-align: center; gap: 16px;
+  }
+  .not-logged .material-icons-round { font-size: 64px; color: var(--on-surface-variant); opacity: 0.5; }
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 20px; border: none; border-radius: var(--radius-m);
+    font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s;
+    font-family: var(--font-body);
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-secondary { background: transparent; color: var(--primary); }
+  .btn-secondary:hover { background: var(--active-overlay); }
+  /* Snackbar */
+  .snackbar {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: #323232; color: white; padding: 12px 24px;
+    border-radius: var(--radius-m); font-size: 13px; box-shadow: var(--shadow-2);
+    z-index: 1000; opacity: 0; transition: opacity .3s; pointer-events: none;
+  }
+  [data-theme="dark"] .snackbar { background: #E3E3E3; color: #202124; }
+  .snackbar.show { opacity: 1; }
+  /* Action Bar */
+  .action-bar {
+    display: flex; gap: 4px; padding: 8px 16px;
+    background: var(--surface); border-bottom: 1px solid var(--outline); flex-shrink: 0;
+    align-items: center;
+  }
+  .action-bar .icon-btn { width: 36px; height: 36px; }
+  .action-bar .separator { width: 1px; height: 24px; background: var(--outline); margin: 0 4px; }
+  .action-bar .spacer { flex: 1; }
+  .selection-count { font-size: 13px; color: var(--on-surface-variant); margin-right: 8px; }
+  /* Batch Bar */
+  .batch-bar {
+    display: none; gap: 4px; padding: 8px 16px;
+    background: var(--surface); border-bottom: 1px solid var(--outline); flex-shrink: 0;
+    align-items: center;
+  }
+  .batch-bar.show { display: flex; }
+  /* Context Menu */
+  .context-menu {
+    position: fixed; background: var(--surface); border-radius: var(--radius-m);
+    box-shadow: var(--shadow-2); padding: 8px 0; z-index: 2000; min-width: 160px; display: none;
+  }
+  .context-menu.show { display: block; }
+  .menu-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    cursor: pointer; font-size: 14px; color: var(--on-surface); transition: background .2s;
+  }
+  .menu-item:hover { background: var(--active-overlay); }
+  .menu-item.danger { color: var(--error); }
+  .menu-item .material-icons-round { font-size: 18px; }
+  /* Dialog */
+  .dialog-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.5); z-index: 3000; display: none;
+    align-items: center; justify-content: center;
+  }
+  .dialog-overlay.show { display: flex; }
+  .dialog {
+    background: var(--surface); border-radius: var(--radius-l);
+    padding: 24px; width: 320px; box-shadow: var(--shadow-2);
+  }
+  .dialog-title { font-size: 18px; font-weight: 500; margin-bottom: 16px; }
+  .dialog-input {
+    width: 100%; padding: 12px 16px; border: 1px solid var(--outline);
+    border-radius: var(--radius-m); background: var(--surface); color: var(--on-surface);
+    font-size: 14px; margin-bottom: 16px;
+  }
+  .dialog-input:focus { outline: none; border-color: var(--primary); border-width: 2px; padding: 11px 15px; }
+  .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .dialog-actions .btn { padding: 8px 16px; }
+  /* Upload Progress */
+  .upload-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.5); z-index: 4000; display: none;
+    align-items: center; justify-content: center;
+  }
+  .upload-overlay.show { display: flex; }
+  .upload-card {
+    background: var(--surface); border-radius: var(--radius-l);
+    padding: 24px; width: 320px; box-shadow: var(--shadow-2); text-align: center;
+  }
+  .upload-title { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
+  .upload-filename {
+    font-size: 13px; color: var(--on-surface-variant); margin-bottom: 16px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .upload-progress-bar {
+    width: 100%; height: 6px; background: var(--primary-light);
+    border-radius: 3px; overflow: hidden; margin-bottom: 8px;
+  }
+  .upload-progress-fill { height: 100%; background: var(--primary); border-radius: 3px; width: 0%; transition: width .3s; }
+  .upload-status { font-size: 12px; color: var(--on-surface-variant); }
+  /* 排序菜单 */
+  .sort-menu {
+    position: fixed; background: var(--surface); border-radius: var(--radius-m);
+    box-shadow: var(--shadow-2); padding: 8px 0; z-index: 2500; min-width: 180px; display: none;
+  }
+  .sort-menu.show { display: block; }
+  .sort-menu-title { padding: 8px 16px; font-size: 12px; color: var(--on-surface-variant); font-weight: 500; }
+  .sort-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    cursor: pointer; font-size: 14px; color: var(--on-surface); transition: background .2s;
+  }
+  .sort-item:hover { background: var(--active-overlay); }
+  .sort-item.active { color: var(--primary); }
+  .sort-item .material-icons-round { font-size: 18px; }
+  .sort-item .sort-check { margin-left: auto; color: var(--primary); }
+  .sort-item .sort-check.hidden { visibility: hidden; }
+  .sort-dir-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin: 4px 12px; padding: 8px; border-top: 1px solid var(--outline);
+    cursor: pointer; font-size: 13px; color: var(--on-surface-variant);
+  }
+  .sort-dir-btn:hover { background: var(--active-overlay); border-radius: var(--radius-s); }
+  .sort-dir-btn .material-icons-round { font-size: 16px; }
+  /* 容量栏 */
+  .capacity-bar {
+    flex-shrink: 0; background: var(--surface); border-top: 1px solid var(--outline);
+    padding: 8px 16px; display: flex; align-items: center; gap: 8px; font-size: 12px;
+    color: var(--on-surface-variant);
+  }
+  .capacity-bar .material-icons-round { font-size: 16px; color: var(--primary); }
+  .capacity-text { flex-shrink: 0; }
+  .capacity-progress {
+    flex: 1; height: 4px; background: var(--primary-light); border-radius: 2px; overflow: hidden;
+  }
+  .capacity-progress-fill {
+    height: 100%; background: var(--primary); border-radius: 2px; transition: width .3s;
+  }
+  .capacity-progress-fill.warning { background: var(--warning); }
+  .capacity-progress-fill.danger { background: var(--error); }
+  .capacity-percent { flex-shrink: 0; min-width: 36px; text-align: right; }
+  /* 拖拽覆盖层 */
+  .drop-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(26, 115, 232, 0.15); z-index: 5000; display: none;
+    align-items: center; justify-content: center; pointer-events: none;
+    border: 3px dashed var(--primary);
+  }
+  .drop-overlay.show { display: flex; }
+  .drop-card {
+    background: var(--surface); border-radius: var(--radius-l);
+    padding: 32px 48px; box-shadow: var(--shadow-2); text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .drop-card .material-icons-round { font-size: 56px; color: var(--primary); }
+  .drop-card .drop-text { font-size: 16px; font-weight: 500; color: var(--on-surface); }
+  /* 传输面板 */
+  .transfer-panel {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--background); z-index: 6000; display: none;
+    flex-direction: column;
+  }
+  .transfer-panel.show { display: flex; }
+  .transfer-header {
+    height: 56px; background: var(--surface); border-bottom: 1px solid var(--outline);
+    display: flex; align-items: center; padding: 0 8px 0 16px; gap: 8px; flex-shrink: 0;
+    box-shadow: var(--shadow-1);
+  }
+  .transfer-title { font-size: 18px; font-weight: 400; flex: 1; }
+  .transfer-tabs {
+    display: flex; background: var(--surface); border-bottom: 1px solid var(--outline); flex-shrink: 0;
+  }
+  .transfer-tab {
+    flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 14px;
+    color: var(--on-surface-variant); border-bottom: 2px solid transparent; transition: all .2s;
+  }
+  .transfer-tab:hover { background: var(--hover-overlay); }
+  .transfer-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
+  .transfer-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .transfer-item {
+    display: flex; flex-direction: column; gap: 4px; padding: 12px;
+    border-radius: var(--radius-m); margin-bottom: 4px; background: var(--surface);
+  }
+  .transfer-item-header { display: flex; align-items: center; gap: 8px; }
+  .transfer-item-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .transfer-item-icon .material-icons-round { font-size: 18px; }
+  .transfer-item-icon.upload { background: var(--primary-light); color: var(--primary); }
+  .transfer-item-icon.download { background: var(--icon-doc-bg); color: var(--success); }
+  .transfer-item-icon.cloud { background: var(--icon-video-bg); color: #9334E6; }
+  .transfer-item-info { flex: 1; min-width: 0; }
+  .transfer-item-name { font-size: 13px; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .transfer-item-status { font-size: 11px; color: var(--on-surface-variant); }
+  .transfer-item-progress {
+    width: 100%; height: 3px; background: var(--primary-light); border-radius: 2px; overflow: hidden;
+  }
+  .transfer-item-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width .3s; }
+  .transfer-item-progress-fill.done { background: var(--success); }
+  .transfer-item-progress-fill.error { background: var(--error); }
+  /* 云添加对话框 */
+  .magnet-dialog {
+    background: var(--surface); border-radius: var(--radius-l);
+    padding: 24px; width: 340px; max-height: 80vh; box-shadow: var(--shadow-2);
+    display: flex; flex-direction: column;
+  }
+  .magnet-input {
+    width: 100%; padding: 12px 16px; border: 1px solid var(--outline);
+    border-radius: var(--radius-m); background: var(--surface); color: var(--on-surface);
+    font-size: 13px; margin-bottom: 12px; font-family: monospace;
+  }
+  .magnet-input:focus { outline: none; border-color: var(--primary); border-width: 2px; padding: 11px 15px; }
+  .bt-file-list {
+    flex: 1; overflow-y: auto; max-height: 300px; margin-bottom: 12px;
+    border: 1px solid var(--outline); border-radius: var(--radius-m);
+  }
+  .bt-file-item {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    cursor: pointer; border-bottom: 1px solid var(--outline); transition: background .2s;
+  }
+  .bt-file-item:last-child { border-bottom: none; }
+  .bt-file-item:hover { background: var(--hover-overlay); }
+  .bt-file-item .bt-checkbox {
+    width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary); flex-shrink: 0;
+  }
+  .bt-file-info { flex: 1; min-width: 0; }
+  .bt-file-name { font-size: 13px; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bt-file-size { font-size: 11px; color: var(--on-surface-variant); }
+</style>
+</head>
+<body>
+  <div class="app-bar">
+    <div class="logo"><span class="material-icons-round">cloud</span></div>
+    <div class="app-title">光鸭云</div>
+    <button class="icon-btn" id="cloudAddBtn" title="云添加">
+      <span class="material-icons-round">link</span>
+    </button>
+    <button class="icon-btn" id="transferBtn" title="传输列表">
+      <span class="material-icons-round">swap_vert</span>
+    </button>
+    <button class="icon-btn" id="openSidePanelBtn" title="在侧边栏打开">
+      <span class="material-icons-round">web_asset</span>
+    </button>
+    <button class="icon-btn" id="themeBtn" title="切换主题">
+      <span class="material-icons-round" id="themeIcon">dark_mode</span>
+    </button>
+    <button class="icon-btn" id="refreshBtn" title="刷新">
+      <span class="material-icons-round">refresh</span>
+    </button>
+    <button class="icon-btn" id="settingsBtn" title="设置">
+      <span class="material-icons-round">settings</span>
+    </button>
+  </div>
+
+  <div id="notLoggedView" class="not-logged" style="display:none;">
+    <span class="material-icons-round">lock</span>
+    <div>请先登录光鸭云盘</div>
+    <button class="btn btn-primary" id="goSettingsBtn">
+      <span class="material-icons-round">settings</span>
+      前往设置
+    </button>
+  </div>
+
+  <div id="mainView" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
+    <div id="breadcrumb" class="breadcrumb"></div>
+    <div class="action-bar">
+      <button class="icon-btn" id="newFolderBtn" title="新建文件夹">
+        <span class="material-icons-round">create_new_folder</span>
+      </button>
+      <button class="icon-btn" id="uploadBtn" title="上传文件">
+        <span class="material-icons-round">upload</span>
+      </button>
+      <button class="icon-btn" id="pasteBtn" title="粘贴" style="display:none;">
+        <span class="material-icons-round">content_paste</span>
+      </button>
+      <button class="icon-btn" id="cancelPasteBtn" title="取消粘贴" style="display:none;">
+        <span class="material-icons-round">close</span>
+      </button>
+      <div class="separator"></div>
+      <button class="icon-btn" id="selectAllBtn" title="全选/取消全选">
+        <span class="material-icons-round" id="selectAllIcon">check_circle</span>
+      </button>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="sortBtn" title="排序">
+        <span class="material-icons-round" id="sortIcon">sort</span>
+      </button>
+      <button class="icon-btn" id="viewToggleBtn" title="切换视图">
+        <span class="material-icons-round" id="viewToggleIcon">grid_view</span>
+      </button>
+    </div>
+    <div id="batchBar" class="batch-bar">
+      <span class="selection-count" id="selectionCount">已选 0 项</span>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="batchMoveBtn" title="批量移动">
+        <span class="material-icons-round">drive_file_move</span>
+      </button>
+      <button class="icon-btn" id="batchCopyBtn" title="批量复制">
+        <span class="material-icons-round">content_copy</span>
+      </button>
+      <button class="icon-btn" id="batchDeleteBtn" title="批量删除">
+        <span class="material-icons-round">delete</span>
+      </button>
+      <button class="icon-btn" id="batchCancelBtn" title="取消选择">
+        <span class="material-icons-round">close</span>
+      </button>
+    </div>
+    <div id="content" class="content"></div>
+    <div id="capacityBar" class="capacity-bar">
+      <span class="material-icons-round">cloud</span>
+      <span class="capacity-text" id="capacityText">加载中...</span>
+      <div class="capacity-progress">
+        <div id="capacityProgressFill" class="capacity-progress-fill" style="width:0%"></div>
+      </div>
+      <span class="capacity-percent" id="capacityPercent">-</span>
+    </div>
+  </div>
+
+  <!-- 右键菜单 -->
+  <div id="contextMenu" class="context-menu">
+    <div class="menu-item" data-action="download">
+      <span class="material-icons-round">download</span>下载
+    </div>
+    <div class="menu-item" data-action="rename">
+      <span class="material-icons-round">edit</span>重命名
+    </div>
+    <div class="menu-item" data-action="move">
+      <span class="material-icons-round">drive_file_move</span>移动
+    </div>
+    <div class="menu-item" data-action="copy">
+      <span class="material-icons-round">content_copy</span>复制
+    </div>
+    <div class="menu-item danger" data-action="delete">
+      <span class="material-icons-round">delete</span>删除
+    </div>
+  </div>
+
+  <!-- 对话框 -->
+  <div id="dialogOverlay" class="dialog-overlay">
+    <div class="dialog">
+      <div id="dialogTitle" class="dialog-title">新建文件夹</div>
+      <input type="text" id="dialogInput" class="dialog-input" placeholder="请输入名称">
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" id="dialogCancel">取消</button>
+        <button class="btn btn-primary" id="dialogConfirm">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 上传进度 -->
+  <div id="uploadOverlay" class="upload-overlay">
+    <div class="upload-card">
+      <div class="upload-title">正在上传</div>
+      <div id="uploadFilename" class="upload-filename"></div>
+      <div class="upload-progress-bar">
+        <div id="uploadProgressFill" class="upload-progress-fill"></div>
+      </div>
+      <div id="uploadStatus" class="upload-status">准备中...</div>
+    </div>
+  </div>
+
+  <div id="snackbar" class="snackbar"></div>
+
+  <!-- 排序菜单 -->
+  <div id="sortMenu" class="sort-menu">
+    <div class="sort-menu-title">排序方式</div>
+    <div class="sort-item" data-sort="name">
+      <span class="material-icons-round">title</span>名称
+      <span class="material-icons-round sort-check hidden" data-check="name">check</span>
+    </div>
+    <div class="sort-item" data-sort="size">
+      <span class="material-icons-round">filter_drama</span>大小
+      <span class="material-icons-round sort-check hidden" data-check="size">check</span>
+    </div>
+    <div class="sort-item" data-sort="date">
+      <span class="material-icons-round">schedule</span>修改时间
+      <span class="material-icons-round sort-check hidden" data-check="date">check</span>
+    </div>
+    <div class="sort-dir-btn" id="sortDirBtn">
+      <span class="material-icons-round" id="sortDirIcon">arrow_upward</span>
+      <span id="sortDirText">升序</span>
+    </div>
+  </div>
+
+  <!-- 传输面板 -->
+  <div id="transferPanel" class="transfer-panel">
+    <div class="transfer-header">
+      <div class="transfer-title">传输列表</div>
+      <button class="icon-btn" id="transferClearBtn" title="清空已完成">
+        <span class="material-icons-round">delete_sweep</span>
+      </button>
+      <button class="icon-btn" id="transferRefreshBtn" title="刷新">
+        <span class="material-icons-round">refresh</span>
+      </button>
+      <button class="icon-btn" id="transferCloseBtn" title="关闭">
+        <span class="material-icons-round">close</span>
+      </button>
+    </div>
+    <div class="transfer-tabs">
+      <div class="transfer-tab active" data-tab="all">全部</div>
+      <div class="transfer-tab" data-tab="upload">上传</div>
+      <div class="transfer-tab" data-tab="download">下载</div>
+      <div class="transfer-tab" data-tab="cloud">云添加</div>
+    </div>
+    <div id="transferList" class="transfer-list"></div>
+  </div>
+
+  <!-- 云添加对话框 -->
+  <div id="magnetOverlay" class="dialog-overlay">
+    <div class="magnet-dialog">
+      <div id="magnetTitle" class="dialog-title">云添加 - 磁力链接</div>
+      <input type="text" id="magnetInput" class="magnet-input" placeholder="magnet:?xt=urn:btih:...">
+      <div id="btFileListContainer" style="display:none;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <input type="checkbox" id="btSelectAll" checked style="width:18px; height:18px; accent-color:var(--primary);">
+          <span style="font-size:13px; color:var(--on-surface-variant);">全选/取消全选</span>
+          <span id="btSelectedCount" style="flex:1; text-align:right; font-size:12px; color:var(--on-surface-variant);"></span>
+        </div>
+        <div id="btFileList" class="bt-file-list"></div>
+      </div>
+      <div id="magnetStatus" style="font-size:12px; color:var(--on-surface-variant); margin-bottom:12px; display:none;"></div>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" id="magnetCancel">取消</button>
+        <button class="btn btn-primary" id="magnetConfirm">解析</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 拖拽覆盖层 -->
+  <div id="dropOverlay" class="drop-overlay">
+    <div class="drop-card">
+      <span class="material-icons-round">cloud_upload</span>
+      <div class="drop-text">松开鼠标上传文件</div>
+    </div>
+  </div>
+
+  <!-- 持久化file input，避免popup关闭后File引用失效 -->
+  <input type="file" id="persistentFileInput" style="display:none">
+
+  <script src="popup.js"></script>
+</body>
+</html>

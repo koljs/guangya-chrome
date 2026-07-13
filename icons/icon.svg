@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF6B00"/>
+      <stop offset="80%" stop-color="#FF8C00"/>
+      <stop offset="100%" stop-color="#FFD700"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <!-- 白云鸭子 -->
+  <g fill="#FFFFFF">
+    <!-- 身体 -->
+    <ellipse cx="72" cy="78" rx="28" ry="20"/>
+    <!-- 头部 -->
+    <circle cx="44" cy="58" r="16"/>
+    <!-- 翅膀 -->
+    <ellipse cx="80" cy="72" rx="14" ry="10" transform="rotate(-15 80 72)"/>
+  </g>
+  <!-- 嘴巴 -->
+  <polygon points="28,58 20,60 28,62" fill="#FFD700"/>
+  <!-- 眼睛 -->
+  <circle cx="40" cy="56" r="2.5" fill="#333333"/>
+</svg>
