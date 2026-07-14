@@ -665,6 +665,7 @@ async function ossInitiateMultipart(bucketUrl, objectKey, creds) {
   const contentType = 'application/octet-stream';
   const canonicalizedResource = `/${creds.bucketName}/${objectKey}?uploads`;
   const authorization = await buildOSSAuth(creds, 'POST', contentType, date, canonicalizedResource);
+  console.log('[OSS] InitiateMultipart:', `${bucketUrl}/${objectKey}?uploads`);
 
   const resp = await fetch(`${bucketUrl}/${objectKey}?uploads`, {
     method: 'POST',
@@ -679,11 +680,13 @@ async function ossInitiateMultipart(bucketUrl, objectKey, creds) {
 
   if (!resp.ok) {
     const text = await resp.text();
+    console.error('[OSS] InitiateMultipart failed:', resp.status, text);
     throw new Error(`初始化分片上传失败: ${resp.status} ${text}`);
   }
   const xml = await resp.text();
   const match = xml.match(/<UploadId>(.*?)<\/UploadId>/);
   if (!match) throw new Error('未获取到UploadId: ' + xml);
+  console.log('[OSS] InitiateMultipart success, uploadId:', match[1]);
   return match[1];
 }
 
@@ -706,10 +709,12 @@ async function ossUploadPart(bucketUrl, objectKey, creds, uploadId, partNumber, 
 
   if (!resp.ok) {
     const text = await resp.text();
+    console.error(`[OSS] UploadPart ${partNumber} failed:`, resp.status, text);
     throw new Error(`分片 ${partNumber} 上传失败: ${resp.status} ${text}`);
   }
   const etag = (resp.headers.get('ETag') || '').replace(/"/g, '');
   if (!etag) throw new Error(`分片 ${partNumber} 未获取到ETag`);
+  console.log(`[OSS] UploadPart ${partNumber} success, etag:`, etag);
   return { partNumber, etag, size: blob.size };
 }
 
@@ -726,6 +731,7 @@ async function ossCompleteMultipart(bucketUrl, objectKey, creds, uploadId, parts
 
   // OSS要求CompleteMultipartUpload必须包含Content-MD5头
   const contentMd5 = md5Base64(xml);
+  console.log('[OSS] CompleteMultipart: parts=', parts.length, 'md5=', contentMd5, 'xml=', xml.substring(0, 200));
   const authorization = await buildOSSAuth(creds, 'POST', contentType, date, canonicalizedResource, contentMd5);
 
   const resp = await fetch(`${bucketUrl}/${objectKey}?uploadId=${uploadId}`, {
@@ -740,15 +746,17 @@ async function ossCompleteMultipart(bucketUrl, objectKey, creds, uploadId, parts
     body: xml
   });
 
+  const respText = await resp.text();
   if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(`合并分片失败: ${resp.status} ${text}`);
+    console.error('[OSS] CompleteMultipart failed:', resp.status, respText);
+    throw new Error(`合并分片失败: ${resp.status} ${respText}`);
   }
   // OSS可能返回200但body含错误
-  const text = await resp.text();
-  if (text.includes('<Error>') || text.includes('<Code>')) {
-    throw new Error(`合并分片失败: ${text}`);
+  if (respText.includes('<Error>') || respText.includes('<Code>')) {
+    console.error('[OSS] CompleteMultipart error in 200:', respText);
+    throw new Error(`合并分片失败: ${respText}`);
   }
+  console.log('[OSS] CompleteMultipart success');
 }
 
 async function uploadFileObject(fileName, fileSize, file, blobUrl) {
